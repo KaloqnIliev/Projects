@@ -1,0 +1,36 @@
+---
+- name: Install and configure MySQL
+  hosts: dbservers
+  become: yes
+  vars_files:
+    - db-vars.yaml
+  tasks:
+    - name: Install MySQL module for Python 3.x
+      package:
+        name: python3-pymysql
+        state: present
+      when: ansible_playbook_python == "/usr/bin/python3"
+    - name: Install MySQL
+      apt:
+        name: mysql-server
+        state: present
+    - name: Secure MySQL installation
+      mysql_user:
+        name: root
+        password: "{{ mysql_root_password }}"
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+        host_all: yes
+        check_implicit_admin: yes
+        state: present
+    - name: Create MySQL user
+      mysql_user:
+        name: "{{ mysql_user }}"
+        password: "{{ mysql_password }}"
+        login_unix_socket: yes
+        host_all: yes
+        priv: "{{ mysql_database }}.*:ALL"
+        state: present
+    - name: Create MySQL database
+      mysql_db:
+        name: "{{ mysql_database }}"
+        state: present
