@@ -1,0 +1,41 @@
+stages:
+  - test
+  - build
+  - deploy
+
+test:
+  image: python:3.9-slim-buster
+  before_script:
+    - apt-get update && apt-get install -y python3-pip
+    - pip3 install pytest flask py-cpuinfo psutil
+    - pip install --upgrade pip
+  script:
+    - pytest
+
+build:
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u $REGISTRY_USER -p $REGISTRY_PASS
+  script:
+    - docker build . -t kaloqniliev/myrepo:python01 
+    - docker push kaloqniliev/myrepo:python01
+
+deploy:
+  image:
+   name: amazon/aws-cli:latest
+   entrypoint: ["/bin/sh", "-c"]
+  services:
+    - docker:dind
+  before_script:
+    - yum install -y curl tar gzip
+    - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+    - chmod +x kubectl
+    - mv kubectl /usr/local/bin/
+    - aws eks update-kubeconfig --name k801 --region us-east-1
+  script:
+    - kubectl apply -f ./pydep.yaml
+    - sleep 60 # Wait for the service to be up and running
+    - kubectl get svc python-app-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+
