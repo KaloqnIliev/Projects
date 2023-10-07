@@ -37,5 +37,6 @@ deploy:
   script:
     - kubectl apply -f ./pydep.yaml
     - sleep 60 # Wait for the service to be up and running
+  after_script:
     - kubectl get svc python-app-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
 
