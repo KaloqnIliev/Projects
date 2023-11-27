@@ -1,0 +1,24 @@
+version: '3'
+services:
+  python-app:
+    build:
+      context: ./python-app
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+    dns: dns-server
+
+  dns-server:
+    build:
+      context: ./dns-server
+      dockerfile: Dockerfile
+    ports:
+      - "53:53"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
