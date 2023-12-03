@@ -10,7 +10,7 @@ test:
     - pip3 install pytest flask py-cpuinfo psutil
     - pip install --upgrade pip
   script:
-    - pytest
+    - pytest ./src
 
 build:
   image: docker:latest
