@@ -115,7 +115,7 @@ pipeline {
             steps {
                 // Start the Docker container
                 sh '''
-                docker run -d -p 8080:8080 ${DOCKER_REPO}/${APP_NAME}:${env.BUILD_TAG}
+                docker run -d -p 5000:5000 ${DOCKER_REPO}/${APP_NAME}:${env.BUILD_TAG}
                 if [ $? -ne 0 ]; then
                     echo 'Docker run failed'
                     exit 1
