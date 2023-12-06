@@ -5,14 +5,15 @@ def COLOR_MAP = [
 pipeline {
     agent any
 
-    environment {
-        EMAIL = 'kaloqniliev20004@gmail.com'
-        ARTIFACT_NAME = '${env.BUILD_TAG}.tar.gz'
-        APP_NAME = 'py-app'
-        REPO_NAME = 'jfog-repo'
-        DOCKER_REPO = 'kaloqniliev/myrepo:python02'
-        SONAR_SCANNER_VERSION = '5.0.1'
-    }
+ environment {
+    ARTIFACT_NAME = '${env.BUILD_TAG}.tar.gz'
+    APP_NAME = 'py-app'
+    REPO_NAME = 'jfog-repo'
+    SONAR_SCANNER_VERSION = '5.0.1'
+    EMAIL = credentials('my-email-credentials-id')
+    DOCKER_REPO = 'kaloqniliev/myrepo'
+    DOCKER_CREDENTIALS = credentials('my-docker-credentials-id')
+}
 
     options {
         skipDefaultCheckout()
@@ -95,9 +96,18 @@ pipeline {
             }
         }
 
-         stage('Docker Build and Push') {
+        stage('Docker Build and Push') {
             steps {
                 script {
+                    // Login to Docker repository
+                    sh '''
+                    echo "${DOCKER_CREDENTIALS_PSW}" | docker login -u ${DOCKER_CREDENTIALS_USR} --password-stdin ${DOCKER_REPO}
+                    if [ $? -ne 0 ]; then
+                        echo 'Docker login failed'
+                        exit 1
+                    fi
+                    '''
+
                     // Build a Docker image and push it to the Docker repository
                     sh '''
                     docker build -t ${DOCKER_REPO}/${APP_NAME}:${env.BUILD_TAG} .
@@ -111,9 +121,9 @@ pipeline {
                         exit 1
                     fi
                     '''
-                }
-            }
-        }
+               }
+           } 
+       } 
 
         stage('Start Container') {
             steps {
