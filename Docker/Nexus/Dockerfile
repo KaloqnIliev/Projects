@@ -5,7 +5,7 @@ FROM sonatype/nexus3:latest
 ENV NEXUS_HOME /nexus-data
 
 # Specify the user
-USER nexus
+USER root
 
 # Expose the default Nexus port
 EXPOSE 8081
