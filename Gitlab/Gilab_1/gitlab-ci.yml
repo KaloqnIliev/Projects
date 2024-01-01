@@ -1,0 +1,93 @@
+variables:
+  IMAGE_NAME: kaloqniliev/myrepo1
+  IMAGE_TAG: python01
+  KOPS_CLUSTER_NAME: kopscluster.k8s.local
+  KOPS_STATE_STORE: s3://kops0320-bucket 
+
+stages:
+  - infra
+  - test
+  - build
+  - deploy
+  - destroy
+
+infra:
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - apk add --update curl
+    - curl -o terraform.zip https://releases.hashicorp.com/terraform/0.14.7/terraform_0.14.7_linux_amd64.zip
+    - unzip terraform.zip
+    - mv terraform /usr/local/bin/
+    - rm terraform.zip
+    - export TF_VAR_aws_access_key=$AWS_ACCESS_KEY
+    - export TF_VAR_aws_secret_access_key=$AWS_SECRET_ACCESS_KEY
+    - export TF_VAR_aws_default_region=$AWS_DEFAULT_REGION
+
+  script:
+    - terraform init
+    - terraform apply -auto-approve
+  after_script:
+    - echo "Private Key (PEM format):"
+    - terraform output -raw private_key_pem > private_key.pem
+    - echo "Public Key (PEM format):"
+    - terraform output -raw public_key_pem > public_key.pem
+  artifacts:
+    paths:
+      - private_key.pem
+      - public_key.pem
+
+test:
+  image: python:3.9-slim-buster
+  before_script:
+    - apt-get update && apt-get install -y python3-pip
+    - pip3 install pytest flask py-cpuinfo psutil bandit
+    - pip install --upgrade pip
+  script:
+    - pytest ./src --junitxml=pytest-report.xml || true
+    - bandit -r ./src -f json -o bandit-report.json || true
+  allow_failure: true
+  artifacts:
+    paths:
+      - pytest-report.xml
+      - bandit-report.json
+
+build:
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u $REGISTRY_USER -p $REGISTRY_PASS
+    - docker pull aquasec/trivy
+  script:
+    - docker build -t $IMAGE_NAME:$IMAGE_TAG .
+    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image --severity HIGH,CRITICAL $IMAGE_NAME:$IMAGE_TAG || true
+    - docker push $IMAGE_NAME:$IMAGE_TAG
+
+deploy:
+  image: argoproj/argocd:latest
+  script:
+    - echo "$KUBECONFIG" > kubeconfig
+    - export KUBECONFIG=kubeconfig
+    - argocd login $ARGOCD_SERVER --username $ARGOCD_USERNAME --password $ARGOCD_PASSWORD
+    - argocd app create -f ./argocd.yml
+
+destroy:
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - chmod 400 $SSH_KEY
+    - export TF_VAR_aws_access_key=$AWS_ACCESS_KEY
+    - export TF_VAR_aws_secret_access_key=$AWS_SECRET_ACCESS_KEY
+    - export TF_VAR_aws_default_region=$AWS_DEFAULT_REGION
+  script:
+    - ssh -o StrictHostKeyChecking=no -i $SSH_KEY $USER@$IP <<EOF
+      kops delete cluster --name $KOPS_CLUSTER_NAME --state $KOPS_STATE_STORE --yes
+      sleep 120
+      EOF
+    - docker rmi -f $IMAGE_NAME:$IMAGE_TAG
+    - terraform destroy -auto-approve
+
+
