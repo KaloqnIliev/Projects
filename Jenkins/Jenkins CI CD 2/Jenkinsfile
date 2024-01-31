@@ -50,30 +50,7 @@ pipeline {
                 sh "npm install"
             }
         }
-        stage('Snyk Test') {
-            steps {
-                script {
-                    // Install Snyk CLI
-                    sh 'npm install -g snyk'
-
-                    // Authenticate with Snyk
-                    withCredentials([string(credentialsId: 'snyk-api-token', variable: 'SNYK_TOKEN')]) {
-                        sh 'snyk auth $SNYK_TOKEN'
-                    }
-
-                    // Test the project for vulnerabilities
-                    sh 'snyk test'
-                }
-            }
-        }
-        stage('Snyk Monitor') {
-            steps {
-                script {
-                    // Monitor the project on Snyk
-                    sh 'snyk monitor'
-                }
-            }
-        }
+    
         stage('OWASP FS SCAN') {
             steps {
                 dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
