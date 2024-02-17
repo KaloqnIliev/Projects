@@ -1,5 +1,6 @@
 import docker
 import subprocess
+import time
 from datetime import datetime, timedelta
 
 # Create a docker client
@@ -24,9 +25,10 @@ def is_swarm_active():
 
 # Function to initialize Docker Swarm
 def init_swarm():
-    client.swarm.init()
+    client.swarm.init(advertise_addr='ip')
 
-# Function to start stopped containers that are not 2 days old
+
+# Function to start stopped containers that are not 1 minute old
 def start_containers():
     # Get the current time
     now = datetime.now()
@@ -44,15 +46,17 @@ def start_containers():
         # Convert the creation time to datetime object
         created_time = datetime.strptime(created_time.split('.')[0], "%Y-%m-%dT%H:%M:%S")
 
-        # If the container is less than 2 days old and not running
-        if now - created_time < timedelta(days=2) and status != "running":
+        # If the container is less than 1 minute old and not running
+        if now - created_time < timedelta(minutes=1) and status != "running":
             print(f"Starting container {container.id}")
             container.start()
 
-        # If the container is more than 2 days old
-        elif now - created_time > timedelta(days=2):
+        # If the container is more than 1 minute old
+        elif now - created_time > timedelta(minutes=1):
             print(f"Removing container {container.id}")
             container.remove(force=True)
+            print(f"Removing image {container.image.tags[0]}")
+            client.images.remove(container.image.tags[0])
 
 # Continuously monitor Docker Swarm
 while True:
