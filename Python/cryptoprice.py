@@ -58,4 +58,4 @@ while True:
     df.to_csv('crypto_prices.csv', mode='a', header=False)
 
     # Wait for an hour before the next iteration
-    time.sleep(30)
+    time.sleep(300)
