@@ -5,13 +5,10 @@ FROM sonatype/nexus3:latest
 ENV NEXUS_HOME /nexus-data
 
 # Specify the user
-USER root
+USER nexus
 
 # Expose the default Nexus port
 EXPOSE 8081
 
 # Define a volume
-VOLUME ~/Nexus/repo
-
-# Start Nexus
-CMD ["./bin/nexus", "run"]
+VOLUME /path/Nexus/repo:/nexus-data
