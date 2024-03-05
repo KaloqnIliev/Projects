@@ -1,9 +1,0 @@
-{
-    "email": {
-        "my_email": "sender@example.com",
-        "password": "yourpassword",
-        "to_email": "receiver@example.com"
-    },
-    "cryptos": ["bitcoin", "ethereum", "polygon"],
-    "threshold": 0.05
-}
