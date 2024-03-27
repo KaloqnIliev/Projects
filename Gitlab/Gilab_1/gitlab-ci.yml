@@ -1,8 +1,6 @@
 variables:
   IMAGE_NAME: kaloqniliev/myrepo1
   IMAGE_TAG: python01
-  KOPS_CLUSTER_NAME: kopscluster.k8s.local
-  KOPS_STATE_STORE: s3://kops0320-bucket 
 
 stages:
   - infra
@@ -78,15 +76,10 @@ destroy:
   services:
     - docker:dind
   before_script:
-    - chmod 400 $SSH_KEY
     - export TF_VAR_aws_access_key=$AWS_ACCESS_KEY
     - export TF_VAR_aws_secret_access_key=$AWS_SECRET_ACCESS_KEY
     - export TF_VAR_aws_default_region=$AWS_DEFAULT_REGION
   script:
-    - ssh -o StrictHostKeyChecking=no -i $SSH_KEY $USER@$IP <<EOF
-      kops delete cluster --name $KOPS_CLUSTER_NAME --state $KOPS_STATE_STORE --yes
-      sleep 120
-      EOF
     - docker rmi -f $IMAGE_NAME:$IMAGE_TAG
     - terraform destroy -auto-approve
 

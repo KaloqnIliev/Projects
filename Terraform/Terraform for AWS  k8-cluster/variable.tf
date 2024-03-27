@@ -11,8 +11,9 @@ variable "key_name" {
 }
 
 variable "ip_address" {
-  description = "your ip adress"
+  description = "ip"
   type        = string
+   default     = "0.0.0.0/0"
 }
 
 variable "counts" {
