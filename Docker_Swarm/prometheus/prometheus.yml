@@ -1,0 +1,9 @@
+scrape_configs:
+  - job_name: 'prometheus'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['prometheus:9090']
+  - job_name: 'docker'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['localhost:9323']
