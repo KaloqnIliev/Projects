@@ -14,14 +14,14 @@ data "aws_ami" "ubuntu" {
   owners = ["099720109477"] # Canonical
 }
 
-resource "aws_instance" "kube-node" {
+resource "aws_instance" "linux-node" {
   count         = var.counts
   ami           = data.aws_ami.ubuntu.id
   instance_type = var.instance_type
 
   subnet_id                   = aws_subnet.ubuntu-sub.id
   vpc_security_group_ids      = [aws_security_group.ubuntu-sg.id]
-  key_name                    = aws_key_pair.kube-key.key_name
+  key_name                    = aws_key_pair.ssh-key.key_name
 
   user_data = <<-EOF
               user_data = <<-EOF
