@@ -19,8 +19,8 @@ resource "aws_instance" "kube-node" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = var.instance_type
 
-  subnet_id                   = aws_subnet.kube-sub.id
-  vpc_security_group_ids      = [aws_security_group.clust-sg.id]
+  subnet_id                   = aws_subnet.ubuntu-sub.id
+  vpc_security_group_ids      = [aws_security_group.ubuntu-sg.id]
   key_name                    = aws_key_pair.kube-key.key_name
 
   user_data = <<-EOF
