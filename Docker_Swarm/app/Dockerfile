@@ -1,11 +1,12 @@
-FROM python:3.7
+FROM python:3.7-slim
 
 WORKDIR /app
 
-COPY . /app
+COPY requirements.txt .
 
-RUN pip install flask flask_mysqldb
+RUN pip install -r requirements.txt
 
-EXPOSE 5000
+COPY . .
 
 CMD ["python", "app.py"]
+
