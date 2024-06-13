@@ -1,1 +1,2 @@
-flask flask_mysqldb
+Flask==2.0.2
+Flask-Mysqldb==2.0.1
