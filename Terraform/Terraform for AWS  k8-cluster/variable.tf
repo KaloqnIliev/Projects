@@ -19,5 +19,5 @@ variable "ip_address" {
 variable "counts" {
   description = "The number of instances to create"
   type        = number
-  default     = 3
+  default     = 1
 }
