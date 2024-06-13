@@ -24,7 +24,6 @@ resource "aws_instance" "linux-node" {
   key_name                    = aws_key_pair.ssh-key.key_name
 
   user_data = <<-EOF
-              user_data = <<-EOF
               #!/bin/bash
               sudo apt-get update
               sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common gnupg lsb-release
