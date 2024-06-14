@@ -34,7 +34,8 @@ resource "aws_instance" "linux-node" {
               EOF
 
   tags = {
-    Name = count.index == 0 ? "ControlPlane" : "Workernode${count.index}"
+    Name = "ubuntu"
   }
+
 }
 
