@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Node Exporter
-NODE_EXPORTER_VERSION="1.7.0"  # Replace with the desired version
+NODE_EXPORTER_VERSION="1.7.0"  
 wget https://github.com/prometheus/node_exporter/releases/download/v${NODE_EXPORTER_VERSION}/node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64.tar.gz
 tar xvf node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64.tar.gz
 sudo mv node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64/node_exporter /usr/local/bin/
