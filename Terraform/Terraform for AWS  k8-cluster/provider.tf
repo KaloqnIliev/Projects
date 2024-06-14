@@ -1,7 +1,7 @@
 variable "region" {
   description = "The AWS region to deploy resources."
   type        = string
-  default     = "eu-west-2"
+  default     = "us-east-1"
 }
 
 provider "aws" {
