@@ -64,25 +64,13 @@ build:
     - docker push $IMAGE_NAME:$IMAGE_TAG
 
 deploy:
-  stage: deploy
   before_script:
     - chmod 400 $SSH_KEY
   script:
-    - ssh -o StrictHostKeyChecking=no -i $SSH_KEY root@161.35.223.117 "
-        docker login -u $REGISTRY_USER -p $REGISTRY_PASS &&
-        docker ps -aq | xargs docker stop | xargs docker rm &&
-        docker run -d -p 5000:5000 $IMAGE_NAME:$IMAGE_TAG"
-
-destroy:
-  image: docker:latest
-  services:
-    - docker:dind
-  before_script:
-    - export TF_VAR_aws_access_key=$AWS_ACCESS_KEY
-    - export TF_VAR_aws_secret_access_key=$AWS_SECRET_ACCESS_KEY
-    - export TF_VAR_aws_default_region=$AWS_DEFAULT_REGION
-  script:
-    - docker rmi -f $IMAGE_NAME:$IMAGE_TAG
-    - terraform destroy -auto-approve
-
+    - ssh -o StrictHostKeyChecking=no -i $SSH_KEY $USER@$IP "
+        echo $REGISTRY_PASS | sudo docker login -u $REGISTRY_USER --password-stdin &&
+        if [ \$(sudo docker ps -aq | wc -l) -gt 0 ]; then
+          sudo docker ps -aq | xargs sudo docker stop | xargs sudo docker rm;
+        fi &&
+        sudo docker run -d -p 5000:5000 $IMAGE_NAME:$IMAGE_TAG"
 
