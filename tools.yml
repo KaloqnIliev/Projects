@@ -1,0 +1,110 @@
+---
+- name: Install Docker, Kubernetes, and Jenkins
+  hosts: localhost
+  connection: local
+  become: yes
+  vars:
+    upassword: "duner"
+    kubernetes_version: "1.30.0"
+    kubernetes_key: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+    kubernetes_repo: "https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /"
+    docker_key: "https://download.docker.com/linux/ubuntu/gpg"
+    docker_repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+    jenkins_key: "https://pkg.jenkins.io/debian-stable/jenkins.io.key"
+    jenkins_repo: "https://pkg.jenkins.io/debian-stable binary/"
+    openjdk_package: "openjdk-17-jre"
+
+  tasks:
+    - name: Install required packages
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - gpg
+        - python3-passlib
+
+    - name: Create directory for Kubernetes apt-key
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Add Kubernetes apt-key
+      apt_key:
+        url: "{{ kubernetes_key }}"
+        state: present
+        keyring: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+    - name: Add Kubernetes repository
+      shell: |
+         echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] {{ kubernetes_repo }}' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+    - name: Install Docker
+      shell: |
+        curl -fsSL {{ docker_key }} | sudo apt-key add -
+        sudo add-apt-repository "{{ docker_repo }}"
+        sudo apt-get update
+        sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+
+    - name: Install kubeadm, kubelet, and kubectl
+      shell: |
+        sudo apt-get update
+        sudo apt-get install -y kubelet kubeadm kubectl
+        sudo apt-mark hold kubelet kubeadm kubectl
+
+    - name: Add Jenkins key
+      shell: |
+        curl -s {{ jenkins_key }} | sudo apt-key --keyring /etc/apt/keyrings/jenkins-apt-keyring.gpg add -
+
+    - name: Add Jenkins repository
+      shell: |
+        echo 'deb [signed-by=/usr/share/keyrings/jenkins-apt-keyring.gpg] {{ jenkins_repo }}' | sudo tee /etc/apt/sources.list.d/jenkins.list
+
+    - name: Update apt and install Jenkins and OpenJDK
+      expect:
+        command: sudo apt-get install -y jenkins "{{ openjdk_package }}"
+        responses:
+          'Do you want to continue? [Y/n]': 'Y'
+      become: yes
+      become_method: sudo
+
+    - name: Start and enable Jenkins service
+      systemd:
+        name: jenkins
+        enabled: yes
+        state: started
+
+    - name: Create a user
+      user:
+        name: myuser
+        password: "{{ upassword | password_hash('sha512') }}"
+        createhome: yes
+      register: new_user
+
+    - name: Install John the Ripper
+      apt:
+        name: john
+        state: present
+
+    - name: Create a password file for John the Ripper
+      copy:
+        content: "{{ new_user.password }}"
+        dest: "/home/myuser/password.txt"
+
+    - name: Use John the Ripper to test the password
+      shell: |
+        john --format=Raw-SHA512 /home/myuser/password.txt
+        john --show /home/myuser/password.txt
+      register: john_output
+
+    - name: Display John the Ripper output
+      debug:
+        var: john_output.stdout_lines
+
+    - name: Install Git
+      apt:
+        name: git
+        state: present
